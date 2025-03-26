@@ -4,10 +4,12 @@ This repository contains an optimized implementation of matrix multiplication us
 
 ## Features
 
-- Efficient CUDA kernel implementation for matrix multiplication
-- Support for large matrix sizes
-- Optimized memory usage and thread configuration
-- Easy-to-use interface
+- Chunked matrix multiplication
+- Thread block memory sharing
+- Double buffering
+- Vectorised memory access
+- Register optimisation
+- Loop expands
 
 ## Getting Started
 
