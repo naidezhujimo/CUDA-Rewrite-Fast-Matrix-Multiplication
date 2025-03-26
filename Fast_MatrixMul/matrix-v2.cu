@@ -45,7 +45,7 @@ __global__ void matrixMulSharedKernel(float *A, float *B, float *C, int size) {
     int row = by * BLOCK_SIZE + ty;
     int col = bx * BLOCK_SIZE * VECTOR_SIZE + tx * VECTOR_SIZE;
 
-    // 寄存器累加器：每个线程计算 VECTOR_SIZE x 1 的C元素
+    // 寄存器累加器：每个线程计算 VECTOR_SIZE 个元素（向量化）
     float c[VECTOR_SIZE] = {0.0f};
 
     // 预加载第一个Tile到共享内存（双缓冲的前半部分）
@@ -53,7 +53,7 @@ __global__ void matrixMulSharedKernel(float *A, float *B, float *C, int size) {
     for (int k = 0; k < size; k += TILE_SIZE_K) {
         // 协作加载A的Tile（向量化加载）
         int load_k = k + ty;
-        
+        // 使用 float4 进行向量化加载，一次加载 4 个 float 数据
         if (load_k < size && row < size) {
             // 确保地址对齐
             float4 vec = reinterpret_cast<float4*>(&A[row * size + load_k * VECTOR_SIZE])[tx];
@@ -62,7 +62,7 @@ __global__ void matrixMulSharedKernel(float *A, float *B, float *C, int size) {
             s_A[load_phase][ty][tx * VECTOR_SIZE + 2] = vec.z;
             s_A[load_phase][ty][tx * VECTOR_SIZE + 3] = vec.w;
         } else {
-            for (int v = 0; v < VECTOR_SIZE; ++v) {
+            for (int v = 0; v < VECTOR_SIZE; ++v) { // 将矩阵 A 的数据从全局内存加载到共享内存 s_A 中
                 s_A[load_phase][ty][tx * VECTOR_SIZE + v] = 0.0f;
             }
         }
@@ -77,7 +77,7 @@ __global__ void matrixMulSharedKernel(float *A, float *B, float *C, int size) {
             s_B[load_phase][ty][tx * VECTOR_SIZE + 2] = vec.z;
             s_B[load_phase][ty][tx * VECTOR_SIZE + 3] = vec.w;
         } else {
-            for (int v = 0; v < VECTOR_SIZE; ++v) {
+            for (int v = 0; v < VECTOR_SIZE; ++v) { // 将矩阵 B 的数据从全局内存加载到共享内存 s_B 中
                 s_B[load_phase][ty][tx * VECTOR_SIZE + v] = 0.0f;
             }
         }
